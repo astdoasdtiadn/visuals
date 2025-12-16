@@ -1,0 +1,112 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BrainrotAdderGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 150)
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundTransparency = 1
+title.Text = "Brainrot Adder"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = frame
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0.9, 0, 0, 30)
+textBox.Position = UDim2.new(0.05, 0, 0.35, 0)
+textBox.PlaceholderText = "Enter Brainrot Name"
+textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.ClearTextOnFocus = false
+textBox.Font = Enum.Font.SourceSans
+textBox.TextSize = 18
+textBox.Parent = frame
+
+local tbCorner = Instance.new("UICorner")
+tbCorner.CornerRadius = UDim.new(0, 8)
+tbCorner.Parent = textBox
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0.5, 0, 0, 35)
+button.Position = UDim2.new(0.25, 0, 0.65, 0)
+button.Text = "Spawn"
+button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 18
+button.Parent = frame
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.Parent = button
+
+local dragging = false
+local dragStart
+local startPos
+local activeInput
+
+local function updateDrag(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		activeInput = input
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+				activeInput = nil
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input == activeInput then
+		updateDrag(input)
+	end
+end)
+
+textBox.Text = ""
+
+button.Activated:Connect(function()
+	local name = textBox.Text
+	if name ~= "" then
+		pcall(function()
+			ReplicatedStorage:WaitForChild("Packages")
+				:WaitForChild("Net")
+				:WaitForChild("RF/AdminService/SpawnBrainrotInBase")
+				:InvokeServer(name, "", "")
+		end)
+	end
+end)
